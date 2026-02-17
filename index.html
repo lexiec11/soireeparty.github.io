@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soirée — Party Planner</title>
+<meta name="description" content="Your dream party plan awaits. Plan themes, timelines, and invite texts in minutes.">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAF7F2;--fg:#1E1A14;--card:#FDFCFA;--card-fg:#1E1A14;
+  --secondary:#EEEBE4;--muted:#EEEBE4;--muted-fg:#807A6E;
+  --accent:#B59B4C;--accent-fg:#1E1A14;--border:#E0DAD0;
+  --radius:0.75rem;
+}
+.dark{
+  --bg:#0F0D0A;--fg:#EBE4D6;--card:#17140F;--card-fg:#EBE4D6;
+  --secondary:#1F1B16;--muted:#1F1B16;--muted-fg:#8A8578;
+  --accent:#B59B4C;--accent-fg:#0F0D0A;--border:#2E2A24;
+}
+body{background:var(--bg);color:var(--fg);font-family:'Inter',sans-serif;line-height:1.6;transition:background .4s,color .4s}
+h1,h2,h3,h4{font-family:'Playfair Display',serif}
+.container{max-width:1100px;margin:0 auto;padding:0 20px}
+.hero{position:relative;overflow:hidden;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--secondary) 40%,transparent);padding:80px 20px;text-align:center;transition:background .4s}
+.hero .dot-bg{position:absolute;inset:0;opacity:.02;background-image:radial-gradient(circle at 1px 1px,var(--fg) 1px,transparent 0);background-size:32px 32px}
+.hero-sub{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3em;color:var(--accent);margin-bottom:12px;animation:fadeIn .6s ease}
+.hero h1{font-size:clamp(3rem,10vw,6rem);font-weight:700;letter-spacing:-0.02em;animation:scaleIn .8s ease}
+.hero .tagline{font-family:'Playfair Display',serif;font-style:italic;font-size:clamp(1rem,3vw,1.25rem);color:var(--muted-fg);margin-top:16px;animation:fadeIn .8s .3s backwards}
+.hero .divider{width:80px;height:1px;background:var(--accent);margin:24px auto 0;animation:scaleIn .6s .5s backwards}
+.scroll-cta{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:40px;color:var(--muted-fg);cursor:pointer;border:none;background:none;font:inherit;font-size:12px;font-weight:500;letter-spacing:.05em;animation:fadeIn .8s .8s backwards;transition:color .2s}
+.scroll-cta:hover{color:var(--fg)}
+.scroll-cta svg{animation:bounce 2s infinite}
+.dark-toggle{position:absolute;right:24px;top:24px;z-index:10;width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:color-mix(in srgb,var(--card) 80%,transparent);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+.dark-toggle:hover{transform:scale(1.1);background:var(--secondary)}
+.dark-toggle:active{transform:scale(.95)}
+.card{border-radius:var(--radius);border:1px solid var(--border);background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.04);transition:box-shadow .3s,background .4s}
+.card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.card-content{padding:24px}
+@media(min-width:768px){.card-content{padding:32px}}
+.badge{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);border-radius:999px;padding:4px 12px;font-size:11px;font-weight:500;background:var(--secondary);color:var(--fg);transition:all .3s}
+.badge-accent{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.main-grid{display:grid;grid-template-columns:1fr;gap:24px;margin-top:40px}
+@media(min-width:1024px){.main-grid{grid-template-columns:1.2fr .8fr}}
+.progress-bar{width:192px;height:6px;background:var(--secondary);border-radius:999px;overflow:hidden;transition:all .3s}
+.progress-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .5s ease}
+.vibe-grid{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:640px){.vibe-grid{grid-template-columns:1fr 1fr}}
+.vibe-card{display:flex;align-items:flex-start;gap:12px;border-radius:12px;border:1px solid var(--border);padding:16px;text-align:left;cursor:pointer;background:var(--card);transition:all .2s;font:inherit;color:var(--fg)}
+.vibe-card:hover{transform:translateY(-3px);box-shadow:0 8px 25px -5px rgba(0,0,0,.1)}
+.vibe-card:active{transform:scale(.98)}
+.vibe-card.selected{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--card));box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 20%,transparent)}
+.vibe-emoji{font-size:24px;line-height:1}
+.vibe-title{font-size:13px;font-weight:600}
+.vibe-desc{font-size:11px;color:var(--muted-fg);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:none}
+.btn:active{transform:scale(.95)}
+.btn-primary{background:var(--fg);color:var(--bg)}
+.btn-primary:hover{opacity:.9}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--fg)}
+.btn-outline:hover{background:var(--secondary)}
+.btn-ghost{background:transparent;color:var(--fg)}
+.btn-ghost:hover{background:var(--secondary)}
+.btn:disabled{opacity:.5;pointer-events:none}
+.btn-sm{padding:6px 12px;font-size:12px}
+select,input[type=text]{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--fg);font:inherit;font-size:14px;transition:all .2s;outline:none}
+select:focus,input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 20%,transparent)}
+input[type=range]{-webkit-appearance:none;width:100%;height:8px;background:var(--secondary);border-radius:999px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--bg);border:2px solid var(--fg);cursor:pointer;transition:all .15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+.tabs-list{display:flex;flex-wrap:wrap;gap:4px;border:1px solid var(--border);border-radius:var(--radius);padding:4px;background:var(--secondary);margin-bottom:16px}
+.tab-btn{padding:6px 12px;border-radius:calc(var(--radius) - 4px);border:none;background:transparent;font:inherit;font-size:11px;font-weight:500;color:var(--muted-fg);cursor:pointer;transition:all .15s}
+.tab-btn.active{background:var(--card);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.panel{border:1px solid var(--border);border-radius:var(--radius);background:color-mix(in srgb,var(--secondary) 30%,var(--card));padding:16px}
+.panel-title{font-size:12px;font-weight:600;color:var(--fg);margin-bottom:8px}
+.panel-text{font-size:12px;color:var(--muted-fg);line-height:1.5}
+.panel-list{list-style:none;padding:0}
+.panel-list li{font-size:12px;color:var(--muted-fg);padding:4px 0;display:flex;align-items:flex-start;gap:8px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:5px}
+.swatches{display:flex;gap:8px;margin-top:16px}
+.swatch{width:28px;height:28px;border-radius:50%;border:1px solid var(--border);cursor:pointer;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.swatch:hover{transform:scale(1.3) translateY(-3px);box-shadow:0 4px 10px rgba(0,0,0,.15)}
+.theme-bar{display:flex;height:6px}
+.theme-bar>div{flex:1;transition:background .7s}
+.glass-card{background:color-mix(in srgb,var(--card) 80%,transparent);backdrop-filter:blur(8px)}
+.tip-box{display:flex;gap:8px;padding:12px;border:1px dashed color-mix(in srgb,var(--accent) 30%,transparent);border-radius:var(--radius);background:color-mix(in srgb,var(--accent) 5%,transparent);font-size:11px;color:var(--muted-fg)}
+footer{margin-top:64px;border-top:1px solid var(--border);background:color-mix(in srgb,var(--secondary) 30%,transparent);padding:40px 20px;text-align:center;transition:all .4s}
+footer h3{font-size:24px;font-weight:700;margin-bottom:12px}
+footer p{font-size:11px;color:var(--muted-fg);max-width:360px;margin:0 auto 8px}
+.footer-love{font-size:11px;color:var(--muted-fg);display:flex;align-items:center;justify-content:center;gap:4px}
+.footer-love .heart{color:var(--accent)}
+.footer-divider{width:48px;height:1px;background:color-mix(in srgb,var(--accent) 40%,transparent);margin:12px auto}
+.footer-copy{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:color-mix(in srgb,var(--muted-fg) 60%,transparent)}
+.sub-header{display:flex;flex-direction:column;gap:16px;margin-bottom:40px}
+@media(min-width:768px){.sub-header{flex-direction:row;align-items:center;justify-content:space-between}}
+.step-info{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.two-col{display:grid;grid-template-columns:1fr;gap:24px}
+@media(min-width:640px){.two-col{grid-template-columns:1fr 1fr}}
+.invite-pre{white-space:pre-wrap;border:1px solid var(--border);border-radius:var(--radius);background:var(--card);padding:12px;font-size:12px;color:var(--muted-fg);margin-top:8px;font-family:'Inter',sans-serif}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+.animate-fade{animation:fadeIn .35s ease}
+.pulse{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="dot-bg"></div>
+  <button class="dark-toggle" onclick="toggleDark()" aria-label="Toggle dark mode">
+    <span id="darkIcon">🌙</span>
+  </button>
+  <div class="container" style="position:relative">
+    <p class="hero-sub">✦ Plan · Style · Celebrate ✦</p>
+    <h1>Soirée</h1>
+    <p class="tagline">Your dream party plan awaits</p>
+    <div class="divider"></div>
+    <button class="scroll-cta" onclick="document.getElementById('quiz').scrollIntoView({behavior:'smooth'})">
+      <span>Start planning</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </button>
+  </div>
+</div>
+<div class="container" id="quiz" style="padding-top:32px;padding-bottom:48px">
+  <div class="sub-header">
+    <p style="max-width:420px;font-size:13px;color:var(--muted-fg)">Answer a few quick questions → get your event type, theme, palette, timeline, shopping list, and invite texts.</p>
+    <div class="step-info">
+      <span class="badge"><span style="color:var(--accent)">✦</span> Step <span id="stepNum">1</span> of 6</span>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:16.7%"></div></div>
+    </div>
+  </div>
+  <div class="main-grid">
+    <div class="card">
+      <div class="card-content">
+        <h2 style="font-size:20px;margin-bottom:24px">Quick Quiz</h2>
+        <div id="stepContainer" class="animate-fade"></div>
+        <div style="margin-top:32px;display:flex;flex-wrap:wrap;gap:12px">
+          <button class="btn btn-outline btn-sm" id="btnBack" onclick="goBack()" disabled>◀ Back</button>
+          <button class="btn btn-primary btn-sm" id="btnNext" onclick="goNext()">Next ▶</button>
+          <button class="btn btn-ghost btn-sm" onclick="resetQuiz()">↻ Reset</button>
+          <button class="btn btn-ghost btn-sm" onclick="skipToResults()">⏭ See results</button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div class="card glass-card" style="overflow:hidden">
+        <div class="theme-bar" id="themeBar"></div>
+        <div class="card-content">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <h2 style="font-size:20px">Live Preview</h2>
+            <span class="pulse" style="color:var(--accent)">✦</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px" id="previewBadges"></div>
+          <h3 id="previewName" style="font-size:18px;font-weight:700"></h3>
+          <p id="previewOneLiner" style="font-size:12px;color:var(--muted-fg);margin-top:4px"></p>
+          <div class="swatches" id="previewSwatches"></div>
+          <ul id="previewBullets" style="margin-top:16px;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted-fg)"></ul>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-content">
+          <h2 style="font-size:20px;margin-bottom:16px">Results</h2>
+          <div class="tabs-list">
+            <button class="tab-btn active" onclick="switchTab('theme',this)">Theme</button>
+            <button class="tab-btn" onclick="switchTab('food',this)">Food & Drinks</button>
+            <button class="tab-btn" onclick="switchTab('timeline',this)">Timeline</button>
+            <button class="tab-btn" onclick="switchTab('invite',this)">Invite texts</button>
+            <button class="tab-btn" onclick="switchTab('shop',this)">Shopping</button>
+          </div>
+          <div id="tabTheme" class="tab-content active"></div>
+          <div id="tabFood" class="tab-content"></div>
+          <div id="tabTimeline" class="tab-content"></div>
+          <div id="tabInvite" class="tab-content"></div>
+          <div id="tabShop" class="tab-content"></div>
+          <div style="margin-top:24px;display:flex;flex-wrap:wrap;gap:12px">
+            <button class="btn btn-outline btn-sm" onclick="downloadPDF()">📥 Download plan (PDF)</button>
+            <button class="btn btn-ghost btn-sm" onclick="copySummary()">📋 Copy summary</button>
+          </div>
+          <p style="margin-top:8px;font-size:11px;color:var(--muted-fg)">✨ Tip: Screenshot the "Party Card" info at the top for something shareable.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<footer>
+  <h3>Soirée</h3>
+  <p>Plan unforgettable moments with style. From intimate dinners to grand celebrations — your dream party is just a quiz away.</p>
+  <div class="footer-love">Made with <span class="heart">♥</span> for party lovers</div>
+  <div class="footer-divider"></div>
+  <p class="footer-copy">© 2025 Soirée</p>
+</footer>
+<div id="toast" style="position:fixed;bottom:24px;right:24px;padding:12px 20px;border-radius:var(--radius);background:var(--fg);color:var(--bg);font-size:13px;font-weight:500;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;z-index:999"></div>
+<script>
+const VIBES=[
+  {id:"fancy",emoji:"🍸",title:"Fancy + sleek",desc:"Cocktail vibes, clean decor, looks expensive."},
+  {id:"loud",emoji:"🪩",title:"Loud + chaotic",desc:"Pre-game energy, big music, fun + messy."},
+  {id:"cozy",emoji:"🕯️",title:"Cozy + intimate",desc:"Small group, warm lighting, low-pressure."},
+  {id:"outdoors",emoji:"🌞",title:"Outdoors + airy",desc:"Picnic / backyard / daylight vibes."},
+  {id:"artsy",emoji:"🎨",title:"Artsy + quirky",desc:"Creative theme, DIY touches, unique details."},
+  {id:"nerdy",emoji:"🎮",title:"Nerdy + themed",desc:"Strong concept theme, games, inside jokes."},
+];
+const THEMES={
+  italianSummer:{name:"Italian Summer",palette:["#F6E7C1","#D9822B","#6B8E23","#E9E2D0","#B55239"],decor:["lemons","striped linens","candles + glassware","olive branches"],outfit:"linen / sundress / gold jewelry",drink:"Aperol spritz (mocktail option)",activity:"disposable camera challenge"},
+  oldMoney:{name:"Old Money Night",palette:["#0F1A14","#EAE3D2","#B59B4C","#1B2A41","#8C7A5B"],decor:["taper candles","simple florals","black/cream table","gold accents"],outfit:"black dress / blazer / minimal jewelry",drink:"martini (or sparkling lemonade)",activity:"cards / poker / charades"},
+  studio54:{name:"Studio 54 Disco",palette:["#0B0B0F","#D6D6D6","#FF4FD8","#7C4DFF","#00D1FF"],decor:["disco ball","silver streamers","LED candles","glossy signage"],outfit:"sparkle / metallic / bold makeup",drink:"vodka soda (or cherry soda)",activity:"best-dressed + dance pics"},
+  coquette:{name:"Coquette Pink",palette:["#FFF1F6","#F7B2C4","#B35C75","#F5E0E8","#7A2E45"],decor:["bows","pink napkins","candles","cute handwritten labels"],outfit:"soft pink / white / ribbons",drink:"strawberry spritz (or pink lemonade)",activity:"photo corner + compliments jar"},
+  darkAcademia:{name:"Dark Academia",palette:["#1B1A17","#3A2E2A","#D8C3A5","#6E4B3A","#5A5A5A"],decor:["books","warm lamps","brown paper tags","dried florals"],outfit:"turtleneck / blazer / boots",drink:"red wine (or spiced tea)",activity:"mystery prompts / trivia"},
+  casino:{name:"Casino Night",palette:["#0B3D2E","#F2E8CF","#B80C09","#1A1A1A","#C9A227"],decor:["playing cards","green tablecloth","gold accents","chips (fake)"],outfit:"black / red / glam",drink:"whiskey ginger (or ginger ale)",activity:"poker / blackjack (fake money)"},
+  y2k:{name:"Y2K Throwback",palette:["#E6F4FF","#FF77B7","#A78BFA","#C7F9CC","#111111"],decor:["glitter","butterfly clips","silver balloons","funny posters"],outfit:"denim / baby tees / metallic",drink:"blue raspberry (or soda bar)",activity:"karaoke + throwback photos"},
+  picnic:{name:"Golden Hour Picnic",palette:["#FFE7A3","#F4C2C2","#C8E6C9","#F7F1E3","#8A6F52"],decor:["blankets","flowers","paper fans","fruit board"],outfit:"sundress / sneakers / sunglasses",drink:"lemonade bar",activity:"card games + sunset pics"},
+  murderLite:{name:"Murder Mystery Lite",palette:["#111111","#F2F2F2","#7A7A7A","#8B0000","#C2B280"],decor:["name tags","clue cards","candles","simple props"],outfit:"any, add one 'character' accessory",drink:"signature mocktail",activity:"mini mystery rounds"},
+};
+const NAME_BANK={fancy:["Velvet","Glossy","Champagne","Black-Tie-ish","After Hours"],loud:["Chaos","Main Character","Pre-Game","Dancefloor","Rage Lite"],cozy:["Candlelit","Soft","Cozy","Wine & Whine","Warm"],outdoors:["Golden Hour","Sunny","Backyard","Picnic","Aperol"],artsy:["Artsy","Crafty","Gallery","Color Pop","Quirky"],nerdy:["Lore","Quest","Level Up","Easter Egg","Cosplay-ish"]};
+let S={step:0,vibe:null,budget:2,guests:12,venue:"apartment",timeOfDay:"night",effort:2,foodStyle:"snacks",music:"pop",deadline:"week",customName:"",_themeOverrideKey:null};
+let firedConfetti=false;
+function titleCase(s){return(s||"").toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())}
+function moneyLabel(n){return n===1?"$ (low)":n===2?"$$ (medium)":"$$$ (higher)"}
+function effortText(n){return n===1?"Low lift":n===2?"Medium effort":"High effort / DIY"}
+function vibeObj(id){return VIBES.find(v=>v.id===id)}
+function computeEventType(){if(!S.vibe)return"—";const{vibe:v,guests:g,budget:b,venue,timeOfDay:t,effort:e}=S;if(v==="cozy")return g<=10?"Cozy Dinner / Wine Night":"Cozy House Hang";if(v==="loud")return venue==="apartment"&&g>=20?"Apartment Pre-Game / House Party Lite":"Dance-y Party Night";if(v==="fancy")return b>=2&&(venue==="restaurant"||venue==="house")?"Cocktail Night":"Dress-Up Drinks Night";if(v==="outdoors")return t!=="night"?"Golden Hour Picnic / Backyard Hang":"Outdoor Night Hang (string lights)";if(v==="artsy")return e===3?"Theme Party (DIY Edition)":"Creative Hang / Craft Night";if(v==="nerdy")return"Theme Party / Game Night";return"Hangout"}
+function computeThemes(){if(!S.vibe)return{primary:null,alts:[],primaryKey:""};const{vibe:v,guests:g,effort:e,venue,timeOfDay:t}=S;let pk="italianSummer",ak=["oldMoney","studio54"];if(v==="cozy"){pk=t==="night"?"darkAcademia":"italianSummer";ak=["coquette","italianSummer","casino"]}else if(v==="loud"){pk=g>=18?"studio54":"y2k";ak=["y2k","casino","studio54"]}else if(v==="fancy"){pk="oldMoney";ak=["casino","darkAcademia","italianSummer"]}else if(v==="outdoors"){pk=venue==="outdoors"||t!=="night"?"picnic":"italianSummer";ak=["italianSummer","coquette","picnic"]}else if(v==="artsy"){pk=e===3?"murderLite":"coquette";ak=["y2k","italianSummer","darkAcademia"]}else if(v==="nerdy"){pk="murderLite";ak=["casino","y2k","darkAcademia"]}ak=ak.filter(k=>k!==pk).slice(0,2);return{primary:THEMES[pk],alts:ak.map(k=>THEMES[k]),primaryKey:pk}}
+function genName(themeName){const bank=NAME_BANK[S.vibe||"fancy"]||["Party"];const w=bank[Math.floor(Math.random()*bank.length)];const base=themeName?themeName.split(" ")[0]:"Party";const tw=S.timeOfDay==="day"?"Day":S.timeOfDay==="golden"?"Hour":"Night";const all=[`The ${w} ${base} ${tw}`,`${w} ${tw}`,`${base} ${w} Party`];return all[Math.floor(Math.random()*all.length)]}
+function buildTimeline(){const d=S.deadline;if(d==="today")return["NOW: text the group + confirm start time","NOW: pick 1 theme + simple palette","2 hours: buy snacks, ice, cups, napkins","1 hour: quick clean, set up lights/music","30 min: chill drinks + set a 'drop zone'","Start: greet people + keep the vibe moving"];if(d==="48h")return["Today: lock theme + guest list + time","Today: send invite + ask about dietary needs","Tomorrow: buy decor basics + food/drinks","Day-of: clean, set zones (food/drinks/music), prep playlist","1 hour before: set out ice + cups + snacks"];if(d==="week")return["3–5 days before: pick theme + send invite","3–5 days before: plan menu + drink list","2–3 days before: order/buy decor and supplies","1 day before: grocery run + prep what you can","Day-of: clean, set up lighting + playlist, chill drinks","After: quick trash sweep + leftovers plan"];return["2 weeks: choose theme + budget + guest list","10 days: invite people + collect RSVPs","1 week: finalize menu + order anything needed","3–4 days: buy non-perishables + decor","1–2 days: grocery run + prep","Day-of: set up zones, music, and photo corner"]}
+function buildShopping(theme){const base=["Ice + cooler bag","Cups (or glassware) + napkins","Trash bags + paper towels","Snacks (chips + dip + something sweet)","A 'signature drink' ingredient(s)"];const decor=["Candles or string lights","A simple tablecloth or runner","Tape/scissors + lighter","One 'statement' item (balloons / banner / flowers)"];const fb=S.foodStyle==="full"?["Main dish ingredients","Side dish ingredients","Plates + cutlery"]:S.foodStyle==="potluck"?["Sign-up list + serving spoons"]:S.foodStyle==="catered"?["Order confirmation + pickup plan"]:["Charcuterie-ish items (cheese/fruit/crackers)"];const tb=theme?[`Theme decor: ${theme.decor.join(", ")}`,`Photo moment: 1–2 props that match "${theme.name}"`]:[];const sc=S.guests>=25?["Extra ice + extra cups","More trash bags","2 drink options (alcohol + non)"]:[];return[...base,...decor,...fb,...tb,...sc]}
+function buildFood(theme){const snack=["chips + guac/salsa","fruit bowl","something crunchy (pretzels/popcorn)","something sweet (cookies/brownies)"];const full=["pasta + salad","taco bar","pizza + salad","sheet pan chicken + veggies"];const drinks=[];if(theme?.drink)drinks.push(theme.drink);drinks.push("water station (always)");if(S.guests>=20)drinks.push("2nd drink option (simple + cheap)");const food=S.foodStyle==="full"?full:S.foodStyle==="catered"?["order a crowd-pleaser + one vegetarian option"]:S.foodStyle==="potluck"?["assign categories: mains / sides / desserts / drinks"]:snack;return{food,drinks}}
+function inviteTexts(name,themeName){const where=titleCase(S.venue==="apartment"?"my apartment":S.venue==="house"?"my house":S.venue==="outdoors"?"outside":S.venue==="restaurant"?"a bar/restaurant":"TBD");const when=S.timeOfDay==="day"?"today":S.timeOfDay==="golden"?"at golden hour":"tonight";const vibe=S.vibe?vibeObj(S.vibe)?.title||"a vibe":"a vibe";return{chill:`hey!! i'm doing ${name}${themeName?" ("+themeName+")":""} — just a ${vibe.toLowerCase()} kind of thing.\n${where}. come ${when} 🫶\nbring: good vibes + whatever you want to drink/snack`,classy:`You're invited to ${name}${themeName?" — "+themeName:""}.\nLocation: ${where}\nTime: ${when}\nDress: on-theme (or just look cute)\nReply with a yes so I can plan food + drinks.`,chaotic:`🚨 ${name.toUpperCase()} 🚨\ntheme: ${themeName||"whatever main character energy you have"}\nwhere: ${where}\nwhen: ${when}\npull up. bring a drink. we're making memories 🪩`}}
+function computePlan(){const vibeTitle=S.vibe?vibeObj(S.vibe)?.title||"—":"—";const eventType=computeEventType();let{primary,alts}=computeThemes();if(S._themeOverrideKey&&THEMES[S._themeOverrideKey])primary=THEMES[S._themeOverrideKey];const theme=primary;const partyName=S.customName?.trim()||genName(theme?.name);const oneLiner=theme?`${eventType} with a ${theme.name} vibe.`:`${eventType}.`;const invites=inviteTexts(partyName,theme?.name);const timeline=buildTimeline();const shopping=buildShopping(theme);const foodAndDrinks=buildFood(theme);return{vibeTitle,eventType,theme,alts,partyName,oneLiner,invites,timeline,shopping,foodAndDrinks}}
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.opacity="1";t.style.transform="translateY(0)";setTimeout(()=>{t.style.opacity="0";t.style.transform="translateY(10px)"},2000)}
+function copyText(text,label){navigator.clipboard.writeText(text).then(()=>showToast(label||"Copied!")).catch(()=>showToast("Could not copy"))}
+function toggleDark(){document.documentElement.classList.toggle("dark");document.getElementById("darkIcon").textContent=document.documentElement.classList.contains("dark")?"☀️":"🌙"}
+function switchTab(name,btn){document.querySelectorAll(".tab-content").forEach(el=>el.classList.remove("active"));document.querySelectorAll(".tab-btn").forEach(el=>el.classList.remove("active"));document.getElementById("tab"+name.charAt(0).toUpperCase()+name.slice(1)).classList.add("active");btn.classList.add("active")}
+function renderStep(){const c=document.getElementById("stepContainer");c.className="";void c.offsetWidth;c.className="animate-fade";document.getElementById("stepNum").textContent=S.step+1;document.getElementById("progressFill").style.width=((S.step+1)/6*100)+"%";document.getElementById("btnBack").disabled=S.step===0;document.getElementById("btnNext").textContent=S.step===5?"Finish ▶":"Next ▶";document.getElementById("btnNext").disabled=S.step===0&&!S.vibe;if(S.step===0){c.innerHTML=`<p style="font-size:13px;font-weight:600;margin-bottom:4px">1) Pick your vibe</p><p style="font-size:11px;color:var(--muted-fg);margin-bottom:16px">This is the biggest driver of your event + theme.</p><div class="vibe-grid">${VIBES.map(v=>`<button class="vibe-card ${S.vibe===v.id?"selected":""}" onclick="S.vibe='${v.id}';renderAll()"><span class="vibe-emoji">${v.emoji}</span><div><div class="vibe-title">${v.title}</div><div class="vibe-desc">${v.desc}</div></div></button>`).join("")}</div>`}else if(S.step===1){c.innerHTML=`<p style="font-size:13px;font-weight:600;margin-bottom:16px">2) Budget + guest count</p><div class="two-col"><div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px">Budget</label><input type="range" min="1" max="3" step="1" value="${S.budget}" oninput="S.budget=+this.value;renderAll()"><span class="badge" style="margin-top:8px;display:inline-block">${moneyLabel(S.budget)}</span><p style="font-size:11px;color:var(--muted-fg);margin-top:4px">1 = low, 2 = medium, 3 = higher</p></div><div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px">Guest count</label><input type="range" min="2" max="60" step="1" value="${S.guests}" oninput="S.guests=+this.value;renderAll()"><span class="badge" style="margin-top:8px;display:inline-block">${S.guests} guests</span><p style="font-size:11px;color:var(--muted-fg);margin-top:4px">Small + intimate vs bigger + energetic</p></div></div>`}else if(S.step===2){c.innerHTML=`<p style="font-size:13px;font-weight:600;margin-bottom:16px">3) Where + when</p><div class="two-col"><div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px">Venue</label><select onchange="S.venue=this.value;renderAll()">${["apartment","house","outdoors","restaurant","unknown"].map(v=>`<option value="${v}"${S.venue===v?" selected":""}>${titleCase(v==="unknown"?"Not sure yet":v)}</option>`).join("")}</select></div><div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px">Time</label><select onchange="S.timeOfDay=this.value;renderAll()">${[["day","Day"],["golden","Golden hour"],["night","Night"]].map(([v,l])=>`<option value="${v}"${S.timeOfDay===v?" selected":""}>${l}</option>`).join("")}</select></div></div>`}else if(S.step===3){c.innerHTML=`<p style="font-size:13px;font-weight:600;margin-bottom:16px">4) Effort level + food plan</p><div class="two-col"><div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px">Effort</label><input type="range" min="1" max="3" step="1" value="${S.effort}" oninput="S.effort=+this.value;renderAll()"><span class="badge" style="margin-top:8px;display:inline-block">${effortText(S.effort)}</span><p style="font-size:11px;color:var(--muted-fg);margin-top:4px">1 = low lift, 3 = DIY queen</p></div><div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px">Food</label><select onchange="S.foodStyle=this.value;renderAll()">${[["snacks","Snacks + drinks"],["potluck","Potluck"],["full","Full meal"],["catered","Catered / ordered"]].map(([v,l])=>`<option value="${v}"${S.foodStyle===v?" selected":""}>${l}</option>`).join("")}</select></div></div>`}else if(S.step===4){c.innerHTML=`<p style="font-size:13px;font-weight:600;margin-bottom:16px">5) Music + how soon is it?</p><div class="two-col"><div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px">Music vibe</label><select onchange="S.music=this.value;renderAll()">${[["chill","Chill"],["pop","Pop"],["throwbacks","Throwbacks"],["club","Club"],["niche","Niche / themed"]].map(([v,l])=>`<option value="${v}"${S.music===v?" selected":""}>${l}</option>`).join("")}</select></div><div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px">Timeline</label><select onchange="S.deadline=this.value;renderAll()">${[["today","Today (panic plan)"],["48h","48 hours"],["week","This week"],["2w","2+ weeks"]].map(([v,l])=>`<option value="${v}"${S.deadline===v?" selected":""}>${l}</option>`).join("")}</select></div></div>`}else if(S.step===5){c.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><p style="font-size:13px;font-weight:600">6) Name your party (optional)</p><span style="color:var(--accent)">🎉</span></div><p style="font-size:11px;color:var(--muted-fg);margin-bottom:12px">Leave blank and we'll generate one.</p><input type="text" placeholder="e.g., Lexie's Birthday Night Out" value="${S.customName}" oninput="S.customName=this.value;renderAll()" style="transition:box-shadow .2s"><div class="tip-box" style="margin-top:12px"><span style="color:var(--accent)">💡</span><span>Tip: add the occasion (birthday / pregame / girls night) and a vibe word (cozy / glossy / chaotic).</span></div>`}}
+function renderPreview(plan){document.getElementById("themeBar").innerHTML=plan.theme?.palette?plan.theme.palette.map(h=>`<div style="background:${h}"></div>`).join(""):"";document.getElementById("previewBadges").innerHTML=`<span class="badge">Event: <b style="margin-left:4px">${plan.eventType}</b></span><span class="badge">Theme: <b style="margin-left:4px">${plan.theme?.name||"—"}</b></span><span class="badge">Vibe: <b style="margin-left:4px">${plan.vibeTitle}</b></span>`;document.getElementById("previewName").textContent=plan.partyName;document.getElementById("previewOneLiner").textContent=plan.oneLiner;document.getElementById("previewSwatches").innerHTML=plan.theme?.palette?plan.theme.palette.map(h=>`<div class="swatch" style="background:${h}" title="Click to copy ${h}" onclick="copyText('${h}','${h} copied!')"></div>`).join(""):"";document.getElementById("previewBullets").innerHTML=`<li>👥 ${S.guests} guests · ${moneyLabel(S.budget)} · ${effortText(S.effort)}</li><li>👗 ${plan.theme?.outfit||"—"}</li><li>🍹 ${plan.theme?.drink||"—"}</li><li>🎯 ${plan.theme?.activity||"—"}</li>`}
+function renderResults(plan){document.getElementById("tabTheme").innerHTML=`<div class="two-col"><div class="panel"><p class="panel-title">Primary theme</p><span class="badge badge-accent" style="margin-bottom:8px">🎭 ${plan.theme?.name||"—"}</span><p class="panel-text">Decor: ${plan.theme?.decor.join(", ")||"—"}</p><p class="panel-text">Outfit: ${plan.theme?.outfit||"—"}</p><p class="panel-text">Drink: ${plan.theme?.drink||"—"}</p><p class="panel-text">Activity: ${plan.theme?.activity||"—"}</p></div><div class="panel"><p class="panel-title">Alt theme ideas</p><div style="display:flex;flex-wrap:wrap;gap:8px">${plan.alts.map(a=>`<button class="btn btn-outline btn-sm" onclick="swapTheme('${a.name}')">${a.name}</button>`).join("")}</div><p class="panel-text" style="margin-top:8px">Click to swap your primary theme.</p></div></div>`;const fd=plan.foodAndDrinks;document.getElementById("tabFood").innerHTML=`<div class="panel"><p class="panel-title">🍕 Food plan</p><ul class="panel-list">${fd.food.map(x=>`<li><span class="dot"></span>${x}</li>`).join("")}</ul><p class="panel-title" style="margin-top:16px">🥂 Drinks</p><ul class="panel-list">${fd.drinks.map(x=>`<li><span class="dot"></span>${x}</li>`).join("")}</ul></div>`;document.getElementById("tabTimeline").innerHTML=`<div class="panel"><p class="panel-title">📅 Your timeline</p><ul class="panel-list">${plan.timeline.map(x=>`<li><span class="dot"></span>${x}</li>`).join("")}</ul></div>`;document.getElementById("tabInvite").innerHTML=`<div class="panel"><p class="panel-title">💌 Pick a tone, copy, and send.</p><div style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0">${["chill","classy","chaotic"].map(t=>`<button class="btn btn-outline btn-sm" onclick="copyText(currentPlan.invites.${t},'${t} invite copied! ✨')">📋 Copy ${t}</button>`).join("")}</div><pre class="invite-pre">${plan.invites.chill}</pre></div>`;document.getElementById("tabShop").innerHTML=`<div class="panel"><p class="panel-title">🛒 Shopping list</p><ul class="panel-list">${plan.shopping.map(x=>`<li><span class="dot"></span>${x}</li>`).join("")}</ul></div>`}
+let currentPlan;
+function renderAll(){currentPlan=computePlan();renderStep();renderPreview(currentPlan);renderResults(currentPlan)}
+function goNext(){if(S.step<5){S.step++;renderAll();if(S.step===5&&!firedConfetti){firedConfetti=true;fireConfetti()}}}
+function goBack(){if(S.step>0){S.step--;renderAll()}}
+function resetQuiz(){S={step:0,vibe:null,budget:2,guests:12,venue:"apartment",timeOfDay:"night",effort:2,foodStyle:"snacks",music:"pop",deadline:"week",customName:"",_themeOverrideKey:null};firedConfetti=false;renderAll()}
+function skipToResults(){S.step=5;if(!firedConfetti){firedConfetti=true;fireConfetti()}renderAll()}
+function swapTheme(name){const key=Object.keys(THEMES).find(k=>THEMES[k].name===name);if(key){S._themeOverrideKey=key;renderAll();showToast("✨ Swapped to "+name)}}
+function fireConfetti(){const end=Date.now()+2000;(function frame(){confetti({particleCount:3,angle:60+Math.random()*60,spread:55,origin:{x:Math.random(),y:Math.random()*.4},colors:["#B59B4C","#D9822B","#FF4FD8","#00D1FF","#F7B2C4"]});if(Date.now()<end)requestAnimationFrame(frame)})()}
+function copySummary(){const p=currentPlan;const lines=["PARTY BLUEPRINT",`Name: ${p.partyName}`,`Event type: ${p.eventType}`,`Theme: ${p.theme?.name||"—"}`,`Vibe: ${p.vibeTitle}`,"",`Palette: ${p.theme?.palette?.join(", ")||"—"}`,`Outfit: ${p.theme?.outfit||"—"}`,`Signature drink: ${p.theme?.drink||"—"}`,"","TIMELINE",...p.timeline.map(x=>`- ${x}`),"","FOOD",...p.foodAndDrinks.food.map(x=>`- ${x}`),"","DRINKS",...p.foodAndDrinks.drinks.map(x=>`- ${x}`),"","SHOPPING LIST",...p.shopping.map(x=>`- ${x}`),"","INVITE TEXTS",`Chill:\n${p.invites.chill}`,"",`Classy:\n${p.invites.classy}`,"",`Chaotic:\n${p.invites.chaotic}`];copyText(lines.join("\n"),"Summary copied! ✨")}
+function downloadPDF(){const{jsPDF}=window.jspdf;const doc=new jsPDF({unit:"mm",format:"a4"});const p=currentPlan,W=doc.internal.pageSize.getWidth(),m=20,mW=W-m*2;let y=20;const addLine=(t,s=10,b=false)=>{if(y>270){doc.addPage();y=20}doc.setFontSize(s);doc.setFont("helvetica",b?"bold":"normal");const l=doc.splitTextToSize(t,mW);doc.text(l,m,y);y+=l.length*(s*.45)+2};const gap=(h=4)=>{y+=h};doc.setFillColor(245,240,232);doc.rect(0,0,W,45,"F");doc.setFontSize(24);doc.setFont("helvetica","bold");doc.setTextColor(30,25,20);doc.text("🎉  Party Blueprint",m,18);doc.setFontSize(12);doc.setFont("helvetica","normal");doc.setTextColor(100,90,75);doc.text(p.partyName,m,28);doc.setFontSize(10);doc.text(p.oneLiner,m,35);y=52;doc.setTextColor(30,25,20);addLine("📋  Overview",14,true);gap(2);addLine(`✨  Event type:  ${p.eventType}`);addLine(`🎭  Theme:  ${p.theme?.name||"—"}`);addLine(`💫  Vibe:  ${p.vibeTitle}`);addLine(`👥  Guests:  ${S.guests}  ·  Budget: ${moneyLabel(S.budget)}`);addLine(`👗  Outfit:  ${p.theme?.outfit||"—"}`);addLine(`🍹  Signature drink:  ${p.theme?.drink||"—"}`);addLine(`🎯  Activity:  ${p.theme?.activity||"—"}`);gap(3);if(p.theme?.palette){addLine("🎨  Color Palette",14,true);gap(2);const s=10;p.theme.palette.forEach((hex,i)=>{const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);doc.setFillColor(r,g,b);doc.roundedRect(m+i*(s+4),y,s,s,2,2,"F");doc.setFontSize(7);doc.setTextColor(100,90,75);doc.text(hex,m+i*(s+4),y+s+4)});doc.setTextColor(30,25,20);y+=22;gap(3)}if(p.theme?.decor){addLine("🏠  Decor Ideas",14,true);gap(2);p.theme.decor.forEach(d=>addLine(`  •  ${d}`));gap(3)}addLine("📅  Timeline",14,true);gap(2);p.timeline.forEach(t=>addLine(`  •  ${t}`));gap(3);addLine("🍕  Food Plan",14,true);gap(2);p.foodAndDrinks.food.forEach(f=>addLine(`  •  ${f}`));gap(2);addLine("🥂  Drinks",12,true);gap(1);p.foodAndDrinks.drinks.forEach(d=>addLine(`  •  ${d}`));gap(3);addLine("🛒  Shopping List",14,true);gap(2);p.shopping.forEach(s=>addLine(`  •  ${s}`));gap(3);addLine("💌  Invite Texts",14,true);gap(2);addLine("Chill 🫶",11,true);gap(1);addLine(p.invites.chill);gap(3);addLine("Classy ✨",11,true);gap(1);addLine(p.invites.classy);gap(3);addLine("Chaotic 🪩",11,true);gap(1);addLine(p.invites.chaotic);if(y>270){doc.addPage();y=20}y+=8;doc.setDrawColor(220,210,195);doc.line(m,y,W-m,y);y+=6;doc.setFontSize(8);doc.setTextColor(150,140,125);doc.text("Made with Soirée  🎉",m,y);doc.save(`${p.partyName.replace(/\s+/g,"_")}_plan.pdf`);showToast("PDF downloaded! 🎉")}
+renderAll();
+</script>
+</body>
+</html>
