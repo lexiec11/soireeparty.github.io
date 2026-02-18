@@ -17,5 +17,6 @@ The goal is to give her confidence, structure, and creative direction so she can
 
 ## Link to live site
 
-www.soireeparty.github.io
+# soireeparty.github.io
+
 ## What you learned
