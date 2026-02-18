@@ -16,4 +16,6 @@ A polished PDF version of the final plan
 The goal is to give her confidence, structure, and creative direction so she can turn event planning into a more organized, professional offering.
 
 ## Link to live site
+
+www.soireeparty.github.io
 ## What you learned
