@@ -15,7 +15,7 @@ Copy-ready invite text
 A polished PDF version of the final plan
 The goal is to give her confidence, structure, and creative direction so she can turn event planning into a more organized, professional offering.
 
-## [Link to Live Site](https://lexiec11.github.io/soireeparty.github.io/)
+## [Link to Live Site](https://lexiec11.github.io/soireeparty/)
 
 ## What you learned
 How designing for a real client changes priorities (clarity, simplicity, and “what they’ll actually use”)
